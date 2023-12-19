@@ -9,25 +9,15 @@ use Illuminate\Http\Request;
 
 class OrderDetailController extends Controller
 {
-    public function index()
+    //api for vue
+    public function getAll()
     {
-        $orderdetails = OrderDetail::orderBy('id')->get();
+        $orderdetails = OrderDetail::with('order.customer', 'menuitem')->OrderBy('id')->get();
 
-        return view('orderdetails.index',['orderdetails' => $orderdetails]);
+        return response()->json($orderdetails);
     }
 
-    public function create()
-    {
-        $orders = Order::list(); 
-        $menuitems = MenuItem::list(); 
-
-        return view('orderdetails.create', [
-            'orders' => $orders,
-            'menuitems' => $menuitems
-        ]);
-    }
-
-    public function store(Request $request)
+    public function storeOrderDetail(Request $request)
     {
         $request->validate([
             'order_id'      =>  'required|numeric',
@@ -43,25 +33,20 @@ class OrderDetailController extends Controller
 
         $totalprice = $menuItem->price * $request->quantity;
 
-        OrderDetail::create([
+        $orderdetail = OrderDetail::create([
             'order_id'      => $request->order_id,
             'menuitem_id'   => $request->menuitem_id,
             'quantity'      => $request->quantity,
             'totalprice'    => $totalprice
         ]);
 
-        return redirect('/orderdetails')->with('message', 'A new Order has been added');
+        return response()->json([
+            'status' => "OK",
+            'message' => 'Menu with ID# ' .$orderdetail->id . ' has been created'
+        ]);
     }
 
-    public function edit(OrderDetail $orderdetail)
-    {
-        $orders = Order::all(); 
-        $menuitems = MenuItem::all(); 
-
-        return view('orderdetails.edit', compact('orderdetail', 'orders', 'menuitems'));
-    }
-
-    public function update(OrderDetail $orderdetail, Request $request)
+    public function updateVue(OrderDetail $orderdetail, Request $request)
     {
         $request->validate([
             'order_id'      =>  'required|numeric',
@@ -84,15 +69,21 @@ class OrderDetailController extends Controller
             'totalprice'    => $totalprice
         ]);
 
-        return redirect('/orderdetails')->with('message', 'A new Order has been updated');
+        return response()->json([
+            'status' => "OK",
+            'message' => 'Menu with ID# ' .$orderdetail->id . ' has been created'
+        ]);
     }
 
-    public function delete(OrderDetail $orderdetail)
-    {
-        $name = $orderdetail->order->customer->first_Name;
+    public function destroy(OrderDetail $orderdetail)
+    {   
+        $details = $orderdetail->id;
         $orderdetail->delete();
 
-        return redirect('/orderdetails')->with('message', "$name's order is gone F O R E V E R~");
+        return response()->json([
+            'status' => "OK",
+            'message' => 'Order with the ID ' .$details . ' has been deleted'
+        ]);
     }
 
 }

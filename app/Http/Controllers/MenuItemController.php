@@ -6,21 +6,16 @@ use App\Models\MenuItem;
 use Illuminate\Http\Request;
 
 class MenuItemController extends Controller
-{
-    public function index()
+{   
+    //api for vue
+    public function getAll()
     {
         $menuitems = MenuItem::orderBy('id')->get();
 
-        return view('menuitems.index',['menuitems' => $menuitems]);
+        return response()->json($menuitems);
     }
 
-    public function create()
-    {
-        return view('menuitems.create');
-    }
-    
-    public function store(Request $request)
-    {
+    public function storeMenuItem(Request $request) {
         $request->validate([
             'item_name'     => 'required',
             'description'   => 'required',
@@ -29,7 +24,7 @@ class MenuItemController extends Controller
             'category'      => 'required|in:Drink,Meal,Dessert'
         ]);
 
-        MenuItem::create([
+        $menu = MenuItem::create([
             'item_name'     => $request->item_name,
             'description'   => $request->description,
             'price'         => $request->price,
@@ -37,32 +32,21 @@ class MenuItemController extends Controller
             'category'      => $request->category,
         ]);
 
-        return redirect('/menuitems')->with('message', 'A new item has been added in the menu');
-    }
-
-    public function edit(MenuItem $menuitem)
-    {
-        return view('menuitems.edit', compact('menuitem'));
-    }
-
-    public function update(MenuItem $menuitem, Request $request)
-    {
-        $request->validate([
-            'item_name'     => 'required',
-            'description'   => 'required',
-            'price'         => 'required',
-            'img_link'      => 'required|url',
-            'category'      => 'required|in:Drink,Meal,Dessert'
+        return response()->json([
+            'status' => "OK",
+            'message' => 'Menu with ID# ' .$menu->id . ' has been created'
         ]);
-
-        $menuitem->update($request->all());
-        return redirect('/menuitems')->with('message', "$menuitem->item_name has been updated");
     }
 
-    public function delete(MenuItem $menuitem)
-    {
+    public function destroy(MenuItem $menuitem)
+    {   
+        $details = $menuitem->first_Name;
         $menuitem->delete();
 
-        return redirect('/menuitems')->with('message', "$menuitem->item_name is gone F O R E V E R~");
+        return response()->json([
+            'status' => "OK",
+            'message' => 'Menu Item with the name ' .$details . ' has been deleted'
+        ]);
     }
+
 }

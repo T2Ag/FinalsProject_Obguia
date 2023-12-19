@@ -8,21 +8,22 @@ use Illuminate\Http\Request;
 
 class CustomerController extends Controller
 {
-    public function index()
+    public function getAll()
     {
         $customers = Customer::orderBy('id')->get();
 
-        return view('customers.index',['customers' => $customers]);
+        return response()->json($customers);
     }
 
-    public function create()
+    public function getOne(Customer $customer)
     {
-        return view('customers.create');
+        $customer->load('orders');
+
+        return response()->json($customer);
     }
-    
-    public function store(Request $request)
-    {
-        $request->validate([
+
+    public function storeCustomer(Request $request) {
+        $fields = $request->validate([
             'first_Name'    => 'required',
             'last_Name'     => 'required',
             'phone'         => 'required'
@@ -36,35 +37,43 @@ class CustomerController extends Controller
 
         Order::create([
             'customer_id'   => $customer->id, 
-            'status'        => 'Pending', 
+            'status'        => 'InProgress', 
             'orderdate'     => now(), 
         ]);
-    
 
-        return redirect('/customers')->with('message', 'A new user has been added');
+        return response()->json([
+            'status' => "OK",
+            'message' => 'Customer with ID# ' .$customer->id . ' has been created'
+        ]);
     }
 
-    public function edit(Customer $customer)
+    public function updateVue(Customer $customer, Request $request)
     {
-        return view('customers.edit', compact('customer'));
-    }
-
-    public function update(Customer $customer, Request $request)
-    {
-        $request->validate([
+        $fields = $request->validate([
             'first_Name'    => 'required',
             'last_Name'     => 'required',
             'phone'         => 'required'
         ]);
 
-        $customer->update($request->all());
-        return redirect('/customers')->with('message', "$customer->first_Name has been updated");
+        $customer->update($fields);
+
+        return response()->json([
+            'status' => "OK",
+            'message' => 'Customer with ID# ' .$customer->id . ' has been updated'
+        ]);
     }
 
-    public function delete(Customer $customer)
-    {
+    public function destroy(Customer $customer)
+    {   
+        $details = $customer->first_Name;
         $customer->delete();
 
-        return redirect('/customers')->with('message', "$customer->first_Name is gone F O R E V E R~");
+        return response()->json([
+            'status' => "OK",
+            'message' => 'Customer with the name ' .$details . ' has been deleted'
+        ]);
     }
+
+
+    
 }
